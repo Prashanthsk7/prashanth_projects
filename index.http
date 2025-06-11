@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computer Asset Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card.total { border-left-color: #4facfe; }
+        .stat-card.active { border-left-color: #00d2ff; }
+        .stat-card.maintenance { border-left-color: #ffa726; }
+        .stat-card.retired { border-left-color: #ef5350; }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #666;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+        }
+
+        .assets-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        .search-box, .filter-select {
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-box:focus, .filter-select:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .search-box {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .assets-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .assets-table th,
+        .assets-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .assets-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            position: sticky;
+            top: 0;
+        }
+
+        .assets-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-maintenance {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-retired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .add-asset-form {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .reports-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chart-container {
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            margin-top: 1rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .assets-table {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🖥️ Computer Asset Management System</h1>
+        <p>Track, manage, and monitor your IT assets efficiently</p>
+    </div>
+
+    <div class="container">
+        <!-- Statistics Dashboard -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-number" id="totalAssets">0</div>
+                <div class="stat-label">Total Assets</div>
+            </div>
+            <div class="stat-card active">
+                <div class="stat-number" id="activeAssets">0</div>
+                <div class="stat-label">Active</div>
+            </div>
+            <div class="stat-card maintenance">
+                <div class="stat-number" id="maintenanceAssets">0</div>
+                <div class="stat-label">Maintenance</div>
+            </div>
+            <div class="stat-card retired">
+                <div class="stat-number" id="retiredAssets">0</div>
+                <div class="stat-label">Retired</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Assets Table -->
+            <div class="assets-section">
+                <div class="section-header">
+                    <h2 class="section-title">Asset Inventory</h2>
+                </div>
+                
+                <div class="controls">
+                    <input type="text" id="searchAssets" class="search-box" placeholder="Search assets...">
+                    <select id="filterStatus" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="Active">Active</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Retired">Retired</option>
+                    </select>
+                    <select id="filterType" class="filter-select">
+                        <option value="">All Types</option>
+                        <option value="Desktop">Desktop</option>
+                        <option value="Laptop">Laptop</option>
+                        <option value="Server">Server</option>
+                        <option value="Monitor">Monitor</option>
+                        <option value="Printer">Printer</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="exportData()">Export CSV</button>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="assets-table">
+                        <thead>
+                            <tr>
+                                <th>Asset ID</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Employee</th>
+                                <th>Location</th>
+                                <th>Purchase Date</th>
+                                <th>Warranty</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assetsTableBody">
+                            <!-- Assets will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- Add Asset Form -->
+                <div class="add-asset-form">
+                    <h3 style="margin-bottom: 1rem; color: #2c3e50;">Add New Asset</h3>
+                    <form id="addAssetForm">
+                        <div class="form-group">
+                            <label>Asset Name</label>
+                            <input type="text" id="assetName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Asset Type</label>
+                            <select id="assetType" required>
+                                <option value="">Select Type</option>
+                                <option value="Desktop">Desktop</option>
+                                <option value="Laptop">Laptop</option>
+                                <option value="Server">Server</option>
+                                <option value="Monitor">Monitor</option>
+                                <option value="Printer">Printer</option>
+                                <option value="Router">Router</option>
+                                <option value="Switch">Switch</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Employee/User</label>
+                            <input type="text" id="assetEmployee" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Location</label>
+                            <input type="text" id="assetLocation" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Purchase Date</label>
+                            <input type="date" id="assetPurchaseDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Warranty Expiry</label>
+                            <input type="date" id="assetWarranty">
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="assetStatus" required>
+                                <option value="Active">Active</option>
+                                <option value="Maintenance">Maintenance</option>
+                                <option value="Retired">Retired</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Add Asset</button>
+                    </form>
+                </div>
+
+                <!-- Reports Section -->
+                <div class="reports-section">
+                    <h3 style="margin-bottom: 1rem; color: #2c3e50;">Quick Reports</h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="generateReport('warranty')">Warranty Expiring</button>
+                        <button class="btn btn-secondary btn-sm" onclick="generateReport('age')">Assets by Age</button>
+                        <button class="btn btn-secondary btn-sm" onclick="generateReport('location')">By Location</button>
+                        <button class="btn btn-secondary btn-sm" onclick="generateReport('type')">By Type</button>
+                    </div>
+                    <div class="chart-container">
+                        <div id="chartPlaceholder">📊 Reports will appear here</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Asset Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h3 style="margin-bottom: 1rem; color: #2c3e50;">Edit Asset</h3>
+            <form id="editAssetForm">
+                <input type="hidden" id="editAssetId">
+                <div class="form-group">
+                    <label>Asset Name</label>
+                    <input type="text" id="editAssetName" required>
+                </div>
+                <div class="form-group">
+                    <label>Asset Type</label>
+                    <select id="editAssetType" required>
+                        <option value="Desktop">Desktop</option>
+                        <option value="Laptop">Laptop</option>
+                        <option value="Server">Server</option>
+                        <option value="Monitor">Monitor</option>
+                        <option value="Printer">Printer</option>
+                        <option value="Router">Router</option>
+                        <option value="Switch">Switch</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Employee/User</label>
+                    <input type="text" id="editAssetEmployee" required>
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="editAssetLocation" required>
+                </div>
+                <div class="form-group">
+                    <label>Purchase Date</label>
+                    <input type="date" id="editAssetPurchaseDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Warranty Expiry</label>
+                    <input type="date" id="editAssetWarranty">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="editAssetStatus" required>
+                        <option value="Active">Active</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Retired">Retired</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Update Asset</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()" style="flex: 1;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Asset Management System JavaScript
+        let assets = [];
+        let assetIdCounter = 1;
+
+        // Initialize with sample data
+        function initializeSampleData() {
+            const sampleAssets = [
+                {
+                    id: 'AST-001',
+                    name: 'Dell OptiPlex 7090',
+                    type: 'Desktop',
+                    status: 'Active',
+                    employee: 'John Smith',
+                    location: 'Floor 1 - Desk 12',
+                    purchaseDate: '2023-01-15',
+                    warranty: '2026-01-15'
+                },
+                {
+                    id: 'AST-002',
+                    name: 'MacBook Pro 16"',
+                    type: 'Laptop',
+                    status: 'Active',
+                    employee: 'Sarah Johnson',
+                    location: 'Remote Work',
+                    purchaseDate: '2023-03-20',
+                    warranty: '2026-03-20'
+                },
+                {
+                    id: 'AST-003',
+                    name: 'HP LaserJet Pro',
+                    type: 'Printer',
+                    status: 'Maintenance',
+                    employee: 'Shared Resource',
+                    location: 'Floor 2 - Print Room',
+                    purchaseDate: '2022-08-10',
+                    warranty: '2025-08-10'
+                },
+                {
+                    id: 'AST-004',
+                    name: 'Dell UltraSharp Monitor',
+                    type: 'Monitor',
+                    status: 'Active',
+                    employee: 'Mike Davis',
+                    location: 'Floor 1 - Desk 25',
+                    purchaseDate: '2023-05-12',
+                    warranty: '2026-05-12'
+                },
+                {
+                    id: 'AST-005',
+                    name: 'Lenovo ThinkPad X1',
+                    type: 'Laptop',
+                    status: 'Retired',
+                    employee: 'IT Storage',
+                    location: 'Storage Room',
+                    purchaseDate: '2020-11-30',
+                    warranty: '2023-11-30'
+                }
+            ];
+
+            assets = sampleAssets;
+            assetIdCounter = 6;
+            updateDashboard();
+            renderAssetsTable();
+        }
+
+        // Generate unique asset ID
+        function generateAssetId() {
+            return `AST-${String(assetIdCounter++).padStart(3, '0')}`;
+        }
+
+        // Add new asset
+        document.getElementById('addAssetForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newAsset = {
+                id: generateAssetId(),
+                name: document.getElementById('assetName').value,
+                type: document.getElementById('assetType').value,
+                status: document.getElementById('assetStatus').value,
+                employee: document.getElementById('assetEmployee').value,
+                location: document.getElementById('assetLocation').value,
+                purchaseDate: document.getElementById('assetPurchaseDate').value,
+                warranty: document.getElementById('assetWarranty').value
+            };
+
+            assets.push(newAsset);
+            updateDashboard();
+            renderAssetsTable();
+            this.reset();
+            
+            alert('Asset added successfully!');
+        });
+
+        // Update dashboard statistics
+        function updateDashboard() {
+            const total = assets.length;
+            const active = assets.filter(a => a.status === 'Active').length;
+            const maintenance = assets.filter(a => a.status === 'Maintenance').length;
+            const retired = assets.filter(a => a.status === 'Retired').length;
+
+            document.getElementById('totalAssets').textContent = total;
+            document.getElementById('activeAssets').textContent = active;
+            document.getElementById('maintenanceAssets').textContent = maintenance;
+            document.getElementById('retiredAssets').textContent = retired;
+        }
+
+        // Render assets table
+        function renderAssetsTable(filteredAssets = null) {
+            const assetsToRender = filteredAssets || assets;
+            const tbody = document.getElementById('assetsTableBody');
+            
+            tbody.innerHTML = assetsToRender.map(asset => `
+                <tr>
+                    <td><strong>${asset.id}</strong></td>
+                    <td>${asset.name}</td>
+                    <td>${asset.type}</td>
+                    <td><span class="status-badge status-${asset.status.toLowerCase()}">${asset.status}</span></td>
+                    <td>${asset.employee}</td>
+                    <td>${asset.location}</td>
+                    <td>${formatDate(asset.purchaseDate)}</td>
+                    <td>${asset.warranty ? formatDate(asset.warranty) : 'N/A'}</td>
+                    <td class="actions">
+                        <button class="btn btn-warning btn-sm" onclick="editAsset('${asset.id}')">Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteAsset('${asset.id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleDateString();
+        }
+
+        // Search functionality
+        document.getElementById('searchAssets').addEventListener('input', function() {
+            filterAssets();
+        });
+
+        // Filter functionality
+        document.getElementById('filterStatus').addEventListener('change', function() {
+            filterAssets();
+        });
+
+        document.getElementById('filterType').addEventListener('change', function() {
+            filterAssets();
+        });
+
+        function filterAssets() {
+            const searchTerm = document.getElementById('searchAssets').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value;
+            const typeFilter = document.getElementById('filterType').value;
+
+            let filtered = assets.filter(asset => {
+                const matchesSearch = !searchTerm || 
+                    asset.name.toLowerCase().includes(searchTerm) ||
+                    asset.id.toLowerCase().includes(searchTerm) ||
+                    asset.employee.toLowerCase().includes(searchTerm) ||
+                    asset.location.toLowerCase().includes(searchTerm);
+
+                const matchesStatus = !statusFilter || asset.status === statusFilter;
+                const matchesType = !typeFilter || asset.type === typeFilter;
+
+                return matchesSearch && matchesStatus && matchesType;
+            });
+
+            renderAssetsTable(filtered);
+        }
+
+        // Edit asset
+        function editAsset(assetId) {
+            const asset = assets.find(a => a.id === assetId);
+            if (!asset) return;
+
+            document.getElementById('editAssetId').value = asset.id;
+            document.getElementById('editAssetName').value = asset.name;
+            document.getElementById('editAssetType').value = asset.type;
+            document.getElementById('editAssetEmployee').value = asset.employee;
+            document.getElementById('editAssetLocation').value = asset.location;
+            document.getElementById('editAssetPurchaseDate').value = asset.purchaseDate;
+            document.getElementById('editAssetWarranty').value = asset.warranty;
+            document.getElementById('editAssetStatus').value = asset.status;
+
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        // Close edit modal
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // Update asset
+        document.getElementById('editAssetForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const assetId = document.getElementById('editAssetId').value;
+            const assetIndex = assets.findIndex(a => a.id === assetId);
+            
+            if (assetIndex !== -1) {
+                assets[assetIndex] = {
+                    id: assetId,
+                    name: document.getElementById('editAssetName').value,
+                    type: document.getElementById('editAssetType').value,
+                    status: document.getElementById('editAssetStatus').value,
+                    employee: document.getElementById('editAssetEmployee').value,
+                    location: document.getElementById('editAssetLocation').value,
+                    purchaseDate: document.getElementById('editAssetPurchaseDate').value,
+                    warranty: document.getElementById('editAssetWarranty').value
+                };
+
+                updateDashboard();
+                renderAssetsTable();
+                closeEditModal();
+                alert('Asset updated successfully!');
+            }
+        });
+
+        // Delete asset
+        function deleteAsset(assetId) {
+            if (confirm('Are you sure you want to delete this asset?')) {
+                assets = assets.filter(a => a.id !== assetId);
+                updateDashboard();
+                renderAssetsTable();
+                alert('Asset deleted successfully!');
+            }
+        }
+
+        // Export data to CSV
+        function exportData() {
+            const headers = ['Asset ID', 'Name', 'Type', 'Status', 'Employee', 'Location', 'Purchase Date', 'Warranty'];
+            const csvContent = [
+                headers.join(','),
+                ...assets.map(asset => [
+                    asset.id,
+                    asset.name,
+                    asset.type,
+                    asset.status,
+                    asset.employee,
+                    asset.location,
+                    asset.purchaseDate,
+                    asset.warranty || ''
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'computer_assets.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Generate reports
+        function generateReport(type) {
+            const chartContainer = document.getElementById('chartPlaceholder');
+            
+            switch(type) {
+                case 'warranty':
+                    const expiringSoon = assets.filter(asset => {
+                        if (!asset.warranty) return false;
+                        const warrantyDate = new Date(asset.warranty);
+                        const today = new Date();
+                        const threeMonthsFromNow = new Date();
+                        threeMonthsFromNow.setMonth(today.getMonth() + 3);
+                        return warrantyDate <= threeMonthsFromNow && warrantyDate >= today;
+                    });
+                    chartContainer.innerHTML = `
+                        <div>
+                            <h4>⚠️ Warranty Expiring Soon</h4>
+                            <p>${expiringSoon.length} assets expire within 3 months</p>
+                            ${expiringSoon.map(a => `<small>${a.name} - ${formatDate(a.warranty)}</small>`).join('<br>')}
+                        </div>
+                    `;
+                    break;
+                    
+                case 'type':
+                    const typeCount = {};
+                    assets.forEach(asset => {
+                        typeCount[asset.type] = (typeCount[asset.type] || 0) + 1;
+                    });
+                    chartContainer.innerHTML = `
+                        <div>
+                            <h4>📊 Assets by Type</h4>
+                            ${Object.entries(typeCount).map(([type, count]) => 
+                                `<p>${type}: ${count}</p>`
+                            ).join('')}
+                        </div>
+                    `;
+                    break;
+                    
+                case 'location':
+                    const locationCount = {};
+                    assets.forEach(asset => {
+                        locationCount[asset.location] = (locationCount[asset.location] || 0) + 1;
+                    });
+                    chartContainer.innerHTML = `
+                        <div>
+                            <h4>📍 Assets by Location</h4>
+                            ${Object.entries(locationCount).map(([location, count]) => 
+                                `<p>${location}: ${count}</p>`
+                            ).join('')}
+                        </div>
+                    `;
+                    break;
+                    
+                case 'age':
+                    const currentYear = new Date().getFullYear();
+                    const ageGroups = {
+                        'Less than 1 year': 0,
+                        '1-2 years': 0,
+                        '2-3 years': 0,
+                        'More than 3 years': 0
+                    };
+                    
+                    assets.forEach(asset => {
+                        const purchaseYear = new Date(asset.purchaseDate).getFullYear();
+                        const age = currentYear - purchaseYear;
+                        
+                        if (age < 1) ageGroups['Less than 1 year']++;
+                        else if (age < 2) ageGroups['1-2 years']++;
+                        else if (age < 3) ageGroups['2-3 years']++;
+                        else ageGroups['More than 3 years']++;
+                    });
+                    
+                    chartContainer.innerHTML = `
